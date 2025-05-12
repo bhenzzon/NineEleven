@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 
     <title>9/11</title>
     <style>
@@ -382,18 +383,18 @@ function gameLoop() {
         jumpSound.play(); // Play jump sound
     }
 });
-// Touch support for mobile devices
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault(); // Prevents scrolling
-    if (!gameRunning) {
-        startPrompt.style.display = 'none';
-        startGame();
-    } else {
+// Touch screen support for mobile devices
+canvas.addEventListener('touchstart', () => {
+    if (gameRunning) {
         birdDY = -8;
         jumpSound.currentTime = 0;
         jumpSound.play();
+    } else {
+        startPrompt.style.display = 'none';
+        startGame();
     }
 });
+
 
 
 
