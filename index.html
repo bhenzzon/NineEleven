@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9/11</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #70c5ce;
+            margin: 0;
+        }
+        #gameCanvas {
+            background-color: #f1f1f1;
+            border: 2px solid #333;
+        }
+        #scoreBoard {
+            position: absolute;
+            font-size: 24px;
+            color: #333;
+            height: 480px;
+            width: 320px;
+            font-family: cursive;
+        }
+        #startButton, #restartButton, #quitButton {
+            position: absolute;
+            top: 55%;
+            transform: translateY(-50%);
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            font-family: fantasy;
+        }
+        #startButton {
+            display: block;
+            background-color: rgb(12, 207, 5);
+            color:#f1f1f1;
+        }
+        #restartButton, #quitButton {
+            display: none;
+        }
+        #restartButton {
+            display: none;
+            background-color: rgb(204, 28, 28);
+            color:#f1f1f1;
+            top: 80;
+        }
+        #quitButton {
+            background-color: rgb(201, 25, 25);
+            color: #f1f1f1;
+            top: 65%;
+            position: center;
+        }
+        #scoreOverlay {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border: 3px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            width: 250px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+        }
+        #stars {
+            font-size: 24px;
+            color: gold;
+            margin-bottom: 10px;
+        }
+        #scoreMessage {
+            font-size: 20px;
+            color: #333;
+            font-family: cursive;
+        }
+        .hidden {
+    display: none;
+}
+        #startPrompt {
+        position: absolute;
+        top: 62%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 13px;
+        color: #272c27;
+        font-family: cursive;
+        padding: 10px 20px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+}   
+        #gameLogo {
+        position: absolute;
+        top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 350px; /* Adjust size as needed */
+        display: block; /* Show by default */
+}
+#y8 {
+    position: absolute;
+    top: 5%;  /* Adjust the position as needed */
+    left: 45%; /* Adjust the position as needed */
+    width: 150px; /* Adjust the size as needed */
+    display: block;
+}   
+    
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="320" height="480"></canvas>
+    <img id="y8" src="img.src/Rectangle.png" alt="y8 logo" />
+    <img id="gameLogo" src="img.src/bg.png" alt="Game Logo" />
+    <div id="scoreBoard">Score: 0</div>
+    <button id="startButton">Start Game</button>
+    <button id="restartButton">Restart Game</button>
+    <button id="quitButton">Restart Game</button>
+    <audio id="jumpSound" src="jump.wav"></audio>
+    <audio id="scoreSound" src="passing.wav"></audio>
+    <audio id="gameOverSound" src="gameover.wav"></audio>
+    <audio id="backgroundMusic" src="background-music.wav" loop autoplay></audio>
+    <div id="startPrompt">Press Space to Fly</div>
+    <div id="scoreOverlay">
+        <div id="stars">⭐⭐⭐</div>
+        <div id="scoreMessage">Score: 0 <br> Nice Try!</div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreBoard = document.getElementById('scoreBoard');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const quitButton = document.getElementById('quitButton');
+        const scoreOverlay = document.getElementById('scoreOverlay');
+        const starsDiv = document.getElementById('stars');
+        const scoreMessage = document.getElementById('scoreMessage');
+        const startPrompt = document.getElementById('startPrompt');
+        const jumpSound = document.getElementById('jumpSound');
+        const scoreSound = document.getElementById('scoreSound');
+        const gameOverSound = document.getElementById('gameOverSound');
+        const targetScores = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+        const gameLogo = document.getElementById('gameLogo');
+
+        // Game variables
+        let birdY, birdDY, pipes, score, gameRunning, pipeSpawnCounter;
+
+        function resetGame() {
+            birdY = canvas.height / 2;
+            birdDY = 0;
+            pipes = [];
+            score = 0;
+            pipeSpawnCounter = 0;
+            gameRunning = false;
+            backgroundX = 0;
+            scoreBoard.classList.add('hidden'); 
+            updateScore();
+            displayButtons(false, true);
+            scoreOverlay.style.display = 'none';          
+        }
+
+        const backgroundMusic = document.getElementById('backgroundMusic');
+
+function startGame() {
+    resetGame();
+    gameRunning = true;
+    
+    // Start playing the music
+    backgroundMusic.play();
+    
+    startButton.style.display = 'none';
+    restartButton.style.display = 'none';
+    quitButton.style.display = 'none';
+    scoreBoard.classList.remove('hidden');
+    gameLogo.style.display = 'none';  
+    startPrompt.style.display ='none';
+    spawnPipes();
+    gameLoop();
+}
+
+function endGame() {
+    gameRunning = false;
+    backgroundMusic.pause(); // Pause the background music
+    backgroundMusic.currentTime = 0; // Reset the music to the beginning
+    gameOverSound.currentTime = 0; // Reset the sound to the start
+    gameOverSound.play();
+    displayScoreMessage();
+    displayButtons(true, false);
+    scoreOverlay.style.display = 'block'; 
+}
+
+
+        function displayScoreMessage() {
+            let message = "";
+            let stars = "";
+            if (score < 5) {
+                message = "Nice Try!";
+                stars = "⭐";
+            } else if (score < 15) {
+                message = "Good Job!";
+                stars = "⭐⭐";
+            } else {
+                message = "Well Done!";
+                stars = "⭐⭐⭐";
+            }
+            scoreMessage.innerHTML = `Score: ${score} <br> ${message}`;
+            starsDiv.innerHTML = stars;
+        }
+
+        function displayButtons(restartVisible, startVisible) {
+            restartButton.style.display = restartVisible ? 'block' : 'none';
+            quitButton.style.display = restartVisible ? 'block' : 'none';
+            startButton.style.display = startVisible ? 'block' : 'none';
+        }
+
+        function spawnPipes() {
+            pipes.push({ x: canvas.width, gapY: getRandomGapY() });
+        }
+
+        function getRandomGapY() {
+            return Math.floor(Math.random() * (canvas.height - 200)) + 50;
+        }
+
+        function updateScore() {
+            scoreBoard.innerHTML = `Score: ${score}`;
+        }
+
+        const birdImage = new Image();
+birdImage.src = 'img.src/plane.png'; // Replace with the actual path
+
+const pipeImage = new Image();
+pipeImage.src = 'img.src/building.png';
+
+const backgroundImage = new Image();
+        backgroundImage.src = 'img.src/bg.jpg';
+        
+        function animateBackground() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Move the background
+    backgroundX -= 1; // Adjust the speed as needed
+    if (backgroundX <= -canvas.width) {
+        backgroundX = 0;
+    }
+
+    // Draw the scrolling background images
+    ctx.drawImage(backgroundImage, backgroundX, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgroundImage, backgroundX + canvas.width, 0, canvas.width, canvas.height);
+
+    // Continue animating the background
+    requestAnimationFrame(animateBackground);
+}
+
+function gameLoop() {
+    if (!gameRunning) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    backgroundX -= 1; // Speed of the background scroll
+            if (backgroundX <= -canvas.width) {
+                backgroundX = 0;
+            }
+            ctx.drawImage(backgroundImage, backgroundX, 0, canvas.width, canvas.height);
+            ctx.drawImage(backgroundImage, backgroundX + canvas.width, 0, canvas.width, canvas.height);
+
+    // Bird
+    birdDY += 0.4; // Gravity
+    birdY += birdDY;
+    ctx.drawImage(birdImage, 50, birdY, 60, 60); // Draw the bird image
+
+    if (birdY + 20 > canvas.height || birdY < 0) {
+        endGame();
+        return;
+    }
+
+    // Pipes
+    for (let i = pipes.length - 1; i >= 0; i--) {
+    pipes[i].x -= 2;
+
+    if (pipes[i].x === 50) {
+        score++;
+        updateScore();
+        if (targetScores.includes(score)) {
+                scoreSound.currentTime = 0;
+                scoreSound.play();
+            }
+        }
+
+    if (pipes[i].x + 50 < 0) {
+        pipes.splice(i, 1);
+    }
+
+        ctx.save(); // Save the current state
+    ctx.translate(pipes[i].x + 10, pipes[i].gapY); // Move to the top pipe position
+    ctx.scale(1, -1); // Flip vertically
+    ctx.drawImage(pipeImage, 0, 0, 80, canvas.height); // Draw the pipe
+    ctx.restore(); // Restore the canvas state
+
+    // Draw the bottom pipe normally
+    ctx.drawImage(pipeImage, pipes[i].x, pipes[i].gapY + 150, 80, canvas.height);
+
+    if (
+        50 < pipes[i].x + 50 &&
+        50 + 10 > pipes[i].x &&
+        (birdY < pipes[i].gapY || birdY + 20 > pipes[i].gapY + 150)
+    ) {
+            endGame();
+            return;
+        }
+    }
+
+            // Add new pipes at intervals
+            pipeSpawnCounter++;
+            if (pipeSpawnCounter > 90) { // Adjust this number for spacing
+                spawnPipes();
+                pipeSpawnCounter = 0;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && gameRunning) {
+                birdDY = -8; // Flap effect
+            }
+        });
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        quitButton.addEventListener('click', resetGame);
+        requestAnimationFrame(gameLoop);
+        document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !gameRunning) {
+        startPrompt.style.display = 'none'; // Hide the start message
+        startGame(); // Start the game
+    }
+});
+        document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && gameRunning) {
+        birdDY = -8; // Bird flap effect
+        jumpSound.currentTime = 0; // Reset the sound to the start
+        jumpSound.play(); // Play jump sound
+    }
+});
+
+
+
+        // Initialize game
+        resetGame();
+        animateBackground();
+    </script>
+</body>
+</html>
