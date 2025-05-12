@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
     <title>9/11</title>
     <style>
         body {
@@ -108,7 +109,42 @@
     width: 150px; /* Adjust the size as needed */
     display: block;
 }   
-    
+@media (max-width: 400px) {
+    #gameCanvas {
+        width: 100vw;
+        height: auto;
+    }
+
+    #scoreBoard {
+        font-size: 18px;
+        width: 100%;
+        text-align: center;
+    }
+
+    #startButton, #restartButton, #quitButton {
+        font-size: 16px;
+        width: 80%;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    #startPrompt {
+        font-size: 12px;
+        width: 90%;
+        text-align: center;
+    }
+
+    #gameLogo {
+        width: 90%;
+    }
+
+    #y8 {
+        width: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
     </style>
 </head>
 <body>
@@ -344,6 +380,18 @@ function gameLoop() {
         birdDY = -8; // Bird flap effect
         jumpSound.currentTime = 0; // Reset the sound to the start
         jumpSound.play(); // Play jump sound
+    }
+});
+// Touch support for mobile devices
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Prevents scrolling
+    if (!gameRunning) {
+        startPrompt.style.display = 'none';
+        startGame();
+    } else {
+        birdDY = -8;
+        jumpSound.currentTime = 0;
+        jumpSound.play();
     }
 });
 
